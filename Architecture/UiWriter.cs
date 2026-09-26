@@ -1,6 +1,6 @@
 using MyTimer.Misc;
 
-namespace MyTimer.Logic;
+namespace MyTimer.Architecture;
 
 internal static class UiWriter
 {

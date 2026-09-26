@@ -1,2 +1,2 @@
 global using System;
-global using static MyTimer.Logic.UiWriter;
+global using static MyTimer.Architecture.UiWriter;
