@@ -36,7 +36,8 @@ internal static class Logic
     {
         if (time > 15)
         {
-            Data.LONG++; Data.worksString = "(+1)"; Data.breaksString = "";
+            Data.LONG++; Data.breaksString = ""; Data.worksString = "(+1)";
+            Data.arrow = 2;
 
             Data.LONGlist.Insert(0, time);
 
@@ -48,7 +49,8 @@ internal static class Logic
         }
         else
         {
-            Data.SHORT++; Data.worksString = ""; Data.breaksString = "(+1)";
+            Data.SHORT++; Data.breaksString = "(+1)"; Data.worksString = "";
+            Data.arrow = 1;
 
             Data.SHORTlist.Insert(0, time);
 

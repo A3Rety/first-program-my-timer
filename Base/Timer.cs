@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using MyTimer.Architecture;
 using MyTimer.Misc;
 using MyTimer.UI;
@@ -22,11 +24,12 @@ internal static class AppTimer
     private static int _lastElapsedTimeMinutes = -1;
     private static int _lastElapsedTimeSeconds = -1;
 
-    private static CancellationTokenSource _userCts;
+    private static CancellationTokenSource? _userCts;
 
 
     internal static void TimerAwait(int time, CancellationTokenSource cts)
     {
+        Console.CursorVisible = false;
         Gui.Work();
         _userCts = cts;
         _userTime = time;
@@ -38,7 +41,7 @@ internal static class AppTimer
     {
         CancellationToken token = AppTimer.StartNewTimerSession();
 
-        TimerProcess(time, seconds, token, quit);
+        _ = TimerProcess(time, seconds, token, quit);
     }
 
     // ----------   TIMER   ---------- //
@@ -72,13 +75,16 @@ internal static class AppTimer
             Gui.DrawTotalTimeSpent();
             Gui.DrawHistoryList();
             Gui.Canceled();
+            WriteTextHere(text: " ", left: 41, top: 10, color: 0);
+            WriteTextHere(text: " ", left: 69, top: 10, color: 0);
 
             _stopListener = true;
             _isTaskRunning = false;
             _totalStopWatch.Reset();
             _pausableStopWatch.Reset();
             WriteTextHere(text: "                ", left: 20, top: 23);
-            _userCts.Cancel();
+            Console.CursorVisible = true;
+            _userCts?.Cancel();
 
             return;
         }
@@ -91,7 +97,7 @@ internal static class AppTimer
             _totalStopWatch.Stop();
             ConsoleCommands.PlayMusic();
             ConsoleCommands.OpenConsole();
-            Logic.CalculateTotalTimeSpent(in time);
+            Logic.CalculateTotalTimeSpent(in _userTime);
             Gui.DrawTotalTimeSpent();
             Gui.Done();
         }
@@ -125,7 +131,10 @@ internal static class AppTimer
         _totalStopWatch.Reset();
         _pausableStopWatch.Reset();
         WriteTextHere(text: "                ", left: 20, top: 23);
-        _userCts.Cancel();
+        WriteTextHere(text: " ", left: 41, top: 10, color: 0);
+        WriteTextHere(text: " ", left: 69, top: 10, color: 0);
+        Console.CursorVisible = true;
+        _userCts?.Cancel();
     }
 
     private static void TimerPause()
@@ -156,7 +165,10 @@ internal static class AppTimer
 
             _lastTime -= _lastElapsedTimeMinutes;
             if (_lastElapsedTimeMinutes > _lastTime)
+            {
                 Logic.PrintError();
+                _lastTime = _lastElapsedTimeMinutes;
+            }
 
             TimerStart(_lastTime, _lastElapsedTimeSeconds, quit);
         }
@@ -183,15 +195,17 @@ internal static class AppTimer
         _cts = new CancellationTokenSource();
 
         if (_isTaskRunning == false)
-            StartNewRunTask();
+        {
+            StartNewInputHandler();
+            StartNewTimerDisplayer();
+            _isTaskRunning = true;
+        }
 
         return _cts.Token;
     }
 
-    private static void StartNewRunTask()
+    private static void StartNewInputHandler()
     {
-        _isTaskRunning = true;
-
         _ = Task.Run(() =>
         {
             while (_stopListener == false)
@@ -211,31 +225,29 @@ internal static class AppTimer
                         else
                         {
                             TimerUnpause(true);
+                            _stopListener = true;
                             break;
                         }
-                    }
-                    else if (key.Key == ConsoleKey.E)
-                    {
-                        WriteTextHere(text: $"{_pausableStopWatch.Elapsed:hh\\:mm\\:ss}", left: 20, top: 23);
-                        //total
-                        continue;
                     }
                     else if (key.Key == ConsoleKey.Spacebar)
                     {
                         if (_isPaused == false)
                         {
                             WriteTextHere(text: "----------   PAUSED   ---------- ",
-                                            left: 9, top: 0, color: ConsoleColor.Green);
+                                            left: 9, top: 0, color: ConsoleColor.Red);
                             TimerPause();
                         }
                         else if (_isPaused == true)
                         {
                             WriteTextHere(text: "++++++++++   RESUMED   ++++++++++",
-                                            left: 9, top: 0, color: ConsoleColor.Red);
+                                            left: 9, top: 0, color: ConsoleColor.Green);
                             TimerUnpause();
                         }
+
+                        continue;
                     }
                 }
+
                 Thread.Sleep(150);
             }
 
@@ -243,4 +255,19 @@ internal static class AppTimer
             _isPaused = false;
         }, _cts!.Token);
     }
+
+    private static void StartNewTimerDisplayer()
+    {
+        _ = Task.Run(async () =>
+        {
+            while (_stopListener == false)
+            {
+                WriteTextHere(text: $"{_totalStopWatch.Elapsed:hh\\:mm\\:ss}", left: 20, top: 23,
+                                ConsoleColor.Yellow);
+                await Task.Delay(1000);
+            }
+
+        });
+    }
+
 }

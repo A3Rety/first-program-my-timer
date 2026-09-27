@@ -1,4 +1,6 @@
-﻿using MyTimer.Architecture;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using MyTimer.Architecture;
 using MyTimer.Base;
 using MyTimer.UI;
 

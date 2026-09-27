@@ -6,9 +6,8 @@ internal static class Gui
 {
     internal static void StartScreen()
     {
-        WriteTextHere(text: "q - exit    e - time", left: 8, top: 25, color: 0);
-        WriteTextHere(text: "r - stop", left: 20, top: 26, color: 0);
-        WriteTextHere(text: "space - pause/resume", left: 8, top: 28, color: 0);
+        WriteTextHere(text: "q - exit    r - stop", left: 8, top: 25, color: 0);
+        WriteTextHere(text: "space - pause/resume", left: 8, top: 27, color: 0);
         Gui.DrawBorder();
     }
 
@@ -56,6 +55,16 @@ internal static class Gui
         {
             WriteTextHere(text: "   ", left: 65, top: 10 + k, color: 0);
             WriteTextHere(text: $"{Data.LONGlist[k]}", left: 65, top: 10 + k);
+        }
+
+        switch (Data.arrow)
+        {
+            case 1:
+                WriteTextHere(text: ">", left: 41, top: 10, color: ConsoleColor.White);
+                break;
+            case 2:
+                WriteTextHere(text: "<", left: 69, top: 10, color: ConsoleColor.White);
+                break;
         }
 
     }
