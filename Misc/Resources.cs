@@ -14,7 +14,7 @@ internal static class Resources
                 ConsoleColor.Cyan, ConsoleColor.Magenta, ConsoleColor.Blue,
                 ConsoleColor.White, ConsoleColor.DarkBlue, ConsoleColor.DarkCyan,
                 ConsoleColor.DarkGray, ConsoleColor.DarkGreen, ConsoleColor.DarkMagenta,
-                ConsoleColor.DarkRed, ConsoleColor.DarkYellow, ConsoleColor.Gray
+                ConsoleColor.DarkRed, ConsoleColor.DarkYellow
     ];
 
 }

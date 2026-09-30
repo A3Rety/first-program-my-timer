@@ -31,6 +31,7 @@ internal static class AppTimer
     {
         Console.CursorVisible = false;
         Gui.Work();
+        Gui.DrawKeyBinds(1);
         _userCts = cts;
         _userTime = time;
         _totalStopWatch.Restart();
@@ -77,6 +78,7 @@ internal static class AppTimer
             Gui.Canceled();
             WriteTextHere(text: " ", left: 41, top: 10, color: 0);
             WriteTextHere(text: " ", left: 69, top: 10, color: 0);
+            Gui.DrawKeyBinds(0);
 
             _stopListener = true;
             _isTaskRunning = false;
@@ -133,6 +135,7 @@ internal static class AppTimer
         WriteTextHere(text: "                ", left: 20, top: 23);
         WriteTextHere(text: " ", left: 41, top: 10, color: 0);
         WriteTextHere(text: " ", left: 69, top: 10, color: 0);
+        Gui.DrawKeyBinds(0);
         Console.CursorVisible = true;
         _userCts?.Cancel();
     }
@@ -143,6 +146,7 @@ internal static class AppTimer
             return;
 
         _isPaused = true;
+        Gui.DrawKeyBinds(2);
 
         {
             _cts?.Cancel();
@@ -159,6 +163,7 @@ internal static class AppTimer
             return;
 
         _isPaused = false;
+        Gui.DrawKeyBinds(1);
 
         {
             _totalStopWatch.Start();
@@ -262,7 +267,7 @@ internal static class AppTimer
         {
             while (_stopListener == false)
             {
-                WriteTextHere(text: $"{_totalStopWatch.Elapsed:hh\\:mm\\:ss}", left: 20, top: 23,
+                WriteTextHere(text: $"{_totalStopWatch.Elapsed:hh\\:mm\\:ss}", left: 21, top: 23,
                                 ConsoleColor.Yellow);
                 await Task.Delay(1000);
             }

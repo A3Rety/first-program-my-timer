@@ -6,8 +6,7 @@ internal static class Gui
 {
     internal static void StartScreen()
     {
-        WriteTextHere(text: "q - exit    r - stop", left: 8, top: 25, color: 0);
-        WriteTextHere(text: "space - pause/resume", left: 8, top: 27, color: 0);
+        DrawKeyBinds(0);
         Gui.DrawBorder();
     }
 
@@ -91,6 +90,38 @@ internal static class Gui
         WriteTextHere(text: "+", left: 83, top: 18, color: 0);
         WriteTextHere(text: "+", left: 108, top: 18, color: 0);
         //Console.WriteLine("═══════════════════");
+    }
+
+    internal static void DrawKeyBinds(byte timerState = 0)
+    {
+        Console.ForegroundColor = ConsoleColor.Gray;
+
+        switch (timerState)
+        {
+            case 0:
+                {
+                    WriteTextHere(text: "  -- exit            ", left: 8, top: 25, color: 0);
+                    WriteTextHere(text: "                    ", left: 8, top: 27, color: 0);
+                    WriteTextHere(text: "q", left: 8, top: 25, color: ConsoleColor.White);
+                    break;
+                }
+            case 1:
+                {
+                    WriteTextHere(text: "              -- stop", left: 8, top: 25, color: 0);
+                    WriteTextHere(text: "      -- pause ", left: 8, top: 27, color: 0);
+                    WriteTextHere(text: "r", left: 20, top: 25, color: ConsoleColor.White);
+                    WriteTextHere(text: "space", left: 8, top: 27, color: 0);
+                    break;
+                }
+            case 2:
+                {
+                    WriteTextHere(text: "              -- stop", left: 8, top: 25, color: 0);
+                    WriteTextHere(text: "      -- resume", left: 8, top: 27, color: 0);
+                    WriteTextHere(text: "r", left: 20, top: 25, color: ConsoleColor.White);
+                    WriteTextHere(text: "space", left: 8, top: 27, color: 0);
+                    break;
+                }
+        }
     }
 
     // ----------   DONE   ---------- //
