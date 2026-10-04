@@ -19,6 +19,7 @@ internal static class Data
 
     internal static void Init()
     {
+        MyTimer.Misc.ConsoleCommands.DisabelQuickEditConsoleMode();
         Console.Title = "❤️🌟⭐️💫💖";
         Console.SetWindowSize(120, 30);
         Console.SetBufferSize(120, 30);

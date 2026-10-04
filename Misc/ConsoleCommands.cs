@@ -1,9 +1,19 @@
+using System.Runtime.InteropServices;
+
 namespace MyTimer.Misc;
 
 internal static class ConsoleCommands
 {
-    [System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern IntPtr GetConsoleWindow();
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [DllImport("kernel32.dll")] private static extern IntPtr GetConsoleWindow();
+    [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("kernel32.dll")] private static extern IntPtr GetStdHandle(int n);
+    [DllImport("kernel32.dll")] private static extern bool GetConsoleMode(IntPtr h, out uint m);
+    [DllImport("kernel32.dll")] private static extern bool SetConsoleMode(IntPtr h, uint m);
+
+    private const int STD_INPUT_HANDLE = -10;
+    private const uint QUICK_EDIT = 0x0040;
+
 
     // ----------   MUSIC   ---------- //
     internal static void PlayMusic()
@@ -31,6 +41,13 @@ internal static class ConsoleCommands
     internal static void OpenConsole()
     {
         ShowWindow(GetConsoleWindow(), 9);
+    }
+
+    internal static void DisabelQuickEditConsoleMode()
+    {
+        var h = GetStdHandle(STD_INPUT_HANDLE);
+        GetConsoleMode(h, out uint m);
+        SetConsoleMode(h, m & ~QUICK_EDIT);
     }
 
 }
