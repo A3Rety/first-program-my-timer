@@ -8,47 +8,54 @@ using MyTimer.UI;
 namespace MyTimer.Base;
 
 
-internal static class AppTimer
+internal sealed class AppTimer : IDisposable
 {
-    private static CancellationTokenSource? _cts;
+    private CancellationTokenSource? _cts;
+    private CancellationTokenSource? _userCts;
 
-    private static volatile bool _stopListener = true;
-    private static readonly Stopwatch _totalStopWatch = new();
-    private static readonly Stopwatch _pausableStopWatch = new();
+    private readonly Task? _timeDisplayer;
+    private readonly Task? _inputHandler;
 
-    private static bool _isPaused = false;
-    private static bool _isTaskRunning = false;
+    private readonly Stopwatch _totalStopWatch = new();
+    private readonly Stopwatch _pausableStopWatch = new();
 
-    private static int _userTime = -1;
-    private static int _lastTime = -1;
-    private static int _lastElapsedTimeMinutes = -1;
-    private static int _lastElapsedTimeSeconds = -1;
+    private volatile bool _stopListener = false;
+    private bool _isDisposed = false;
+    private bool _isPaused = false;
+    private bool _isTaskRunning = false;
 
-    private static CancellationTokenSource? _userCts;
+    private int _userTime = -1;
+    private int _lastTime = -1;
+    private int _lastElapsedTimeMinutes = -1;
+    private int _lastElapsedTimeSeconds = -1;
 
 
-    internal static void TimerAwait(int time, CancellationTokenSource cts)
+    public AppTimer(int time, CancellationTokenSource cts)
+    {
+        TimerAwait(time, cts);
+    }
+
+    private void TimerAwait(int time, CancellationTokenSource cts)
     {
         Console.CursorVisible = false;
         Gui.Work();
         Gui.DrawKeyBinds(1);
+
         _userCts = cts;
         _userTime = time;
-        _totalStopWatch.Restart();
         TimerStart(time, 0, false);
     }
 
-    internal static void TimerStart(int time, int seconds, bool quit = false)
+    private void TimerStart(int time, int seconds, bool quit = false)
     {
-        CancellationToken token = AppTimer.StartNewTimerSession();
+        CancellationToken token = StartNewTimerSession();
 
         _ = TimerProcess(time, seconds, token, quit);
     }
 
     // ----------   TIMER   ---------- //
-    private static async Task TimerProcess(int time, int seconds, CancellationToken token, bool quit = false)
+    private async Task TimerProcess(int time, int seconds, CancellationToken token, bool quit = false)
     {
-        _pausableStopWatch.Restart();
         _lastTime = time;
         _lastElapsedTimeMinutes = TimeSpan.Zero.Milliseconds;
         _lastElapsedTimeSeconds = TimeSpan.Zero.Milliseconds;
@@ -57,58 +64,22 @@ internal static class AppTimer
         int oneSecondInMs = 1000;
 
 
-        if (quit)
-        {
-            _totalStopWatch.Stop();
-            int roundedDelta = (int)Math.Round(_totalStopWatch.Elapsed.TotalMinutes,
-                                                MidpointRounding.AwayFromZero);
-            if (_userTime > 15)
-            {
-                Data.LONGlist[0] = (byte)roundedDelta;
-            }
-            else
-            {
-                Data.SHORTlist[0] = (byte)roundedDelta;
-            }
-
-            Misc.ConsoleCommands.PlaySound();
-            Logic.CalculateTotalTimeSpent(in _userTime, roundedDelta);
-            Gui.DrawTotalTimeSpent();
-            Gui.DrawHistoryList();
-            Gui.Canceled();
-            WriteTextHere(text: " ", left: 41, top: 10, color: 0);
-            WriteTextHere(text: " ", left: 69, top: 10, color: 0);
-            Gui.DrawKeyBinds(0);
-
-            _stopListener = true;
-            _isTaskRunning = false;
-            _totalStopWatch.Reset();
-            _pausableStopWatch.Reset();
-            WriteTextHere(text: "                ", left: 20, top: 23);
-            Console.CursorVisible = true;
-            _userCts?.Cancel();
-
-            return;
-        }
-
+        if (quit == true) _cts?.Cancel();
 
         try
         {
             await Task.Delay((time * oneMinuteInMS) - (seconds * oneSecondInMs), token);
 
-            _totalStopWatch.Stop();
             ConsoleCommands.PlayMusic();
-            ConsoleCommands.OpenConsole();
+            PreQuitTimer();
             Logic.CalculateTotalTimeSpent(in _userTime);
-            Gui.DrawTotalTimeSpent();
             Gui.Done();
         }
         catch (OperationCanceledException)
         {
-            if (_isPaused == true)
+            if (_isPaused == true && quit == false)
                 return;
 
-            _totalStopWatch.Stop();
             int roundedDelta = (int)Math.Round(_totalStopWatch.Elapsed.TotalMinutes,
                                                 MidpointRounding.AwayFromZero);
             if (_userTime > 15)
@@ -121,26 +92,17 @@ internal static class AppTimer
             }
 
             Misc.ConsoleCommands.PlaySound();
+            PreQuitTimer();
             Logic.CalculateTotalTimeSpent(in _userTime, roundedDelta);
-            Gui.DrawTotalTimeSpent();
             Gui.DrawHistoryList();
             Gui.Canceled();
         }
         catch { Logic.PrintError(); }
 
-        _stopListener = true;
-        _isTaskRunning = false;
-        _totalStopWatch.Reset();
-        _pausableStopWatch.Reset();
-        WriteTextHere(text: "                ", left: 20, top: 23);
-        WriteTextHere(text: " ", left: 41, top: 10, color: 0);
-        WriteTextHere(text: " ", left: 69, top: 10, color: 0);
-        Gui.DrawKeyBinds(0);
-        Console.CursorVisible = true;
-        _userCts?.Cancel();
+        QuitTimer();
     }
 
-    private static void TimerPause()
+    private void TimerPause()
     {
         if (!CheckCorrectness())
             return;
@@ -157,7 +119,7 @@ internal static class AppTimer
         }
     }
 
-    private static void TimerUnpause(bool quit = false)
+    private void TimerUnpause(bool quit = false)
     {
         if (!CheckCorrectness())
             return;
@@ -179,7 +141,7 @@ internal static class AppTimer
         }
     }
 
-    private static bool CheckCorrectness()
+    private bool CheckCorrectness()
     {
         if (_lastTime == -1 || _lastElapsedTimeMinutes == -1 || _lastElapsedTimeSeconds == -1)
         {
@@ -191,11 +153,8 @@ internal static class AppTimer
     }
 
 
-    internal static CancellationToken StartNewTimerSession()
+    private CancellationToken StartNewTimerSession()
     {
-        _stopListener = false;
-
-        _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
 
@@ -209,9 +168,9 @@ internal static class AppTimer
         return _cts.Token;
     }
 
-    private static void StartNewInputHandler()
+    private void StartNewInputHandler()
     {
-        _ = Task.Run(() =>
+        var _inputHandler = Task.Run(() =>
         {
             while (_stopListener == false)
             {
@@ -261,9 +220,9 @@ internal static class AppTimer
         }, _cts!.Token);
     }
 
-    private static void StartNewTimerDisplayer()
+    private void StartNewTimerDisplayer()
     {
-        _ = Task.Run(async () =>
+        var _timeDisplayer = Task.Run(async () =>
         {
             while (_stopListener == false)
             {
@@ -273,6 +232,36 @@ internal static class AppTimer
             }
 
         });
+    }
+
+    private void PreQuitTimer()
+    {
+        _totalStopWatch.Stop();
+        ConsoleCommands.OpenConsole();
+        Gui.DrawTotalTimeSpent();
+    }
+
+    private void QuitTimer()
+    {
+        _stopListener = true;
+        _isTaskRunning = false;
+        _totalStopWatch.Reset();
+        _pausableStopWatch.Reset();
+        WriteTextHere(text: "                ", left: 20, top: 23);
+        WriteTextHere(text: " ", left: 41, top: 10, color: 0);
+        WriteTextHere(text: " ", left: 69, top: 10, color: 0);
+        Gui.DrawKeyBinds(0);
+        Console.CursorVisible = true;
+        _userCts?.Cancel();
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed) return;
+        _isDisposed = true;
+
+        _cts?.Dispose();
+        _userCts?.Dispose();
     }
 
 }

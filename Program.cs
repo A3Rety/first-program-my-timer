@@ -28,7 +28,7 @@ internal static class Program
 
             var cts = new CancellationTokenSource();
             var token = cts.Token;
-            AppTimer.TimerAwait(time, cts);
+            AppTimer timer = new AppTimer(time, cts);
 
             try
             {
@@ -36,6 +36,9 @@ internal static class Program
             }
             catch (OperationCanceledException) { }
             catch { Logic.PrintError(); }
+
+            timer.Dispose();
         }
+        
     }
 }
