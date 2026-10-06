@@ -43,6 +43,7 @@ internal sealed class AppTimer : IDisposable
 
         _userCts = cts;
         _userTime = time;
+        _totalStopWatch.Restart();
         TimerStart(time, 0, false);
     }
 
@@ -56,6 +57,7 @@ internal sealed class AppTimer : IDisposable
     // ----------   TIMER   ---------- //
     private async Task TimerProcess(int time, int seconds, CancellationToken token, bool quit = false)
     {
+        _pausableStopWatch.Restart();
         _lastTime = time;
         _lastElapsedTimeMinutes = TimeSpan.Zero.Milliseconds;
         _lastElapsedTimeSeconds = TimeSpan.Zero.Milliseconds;
